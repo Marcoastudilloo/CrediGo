@@ -1,6 +1,9 @@
 ﻿using CrediGo.API.Data;
 using CrediGo.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CrediGo.Controllers
@@ -35,6 +38,23 @@ namespace CrediGo.Controllers
 
             return Ok(nueva);
         }
-    }
 
+        [HttpGet("usuario/{id_usuario}")]
+        public async Task<ActionResult<IEnumerable<SolicitudCredito>>> ObtenerSolicitudesPorUsuario(int id_usuario)
+        {
+            var solicitudes = await _context.SolicitudCredito
+                .Where(s => s.Id_usuario == id_usuario)
+                .ToListAsync();
+
+            // Retorna lista vacía si no hay resultados, evitando 404
+            return Ok(solicitudes);
+        }
+
+        [HttpGet("todas")]
+        public async Task<ActionResult<IEnumerable<SolicitudCredito>>> ObtenerTodas()
+        {
+            var solicitudes = await _context.SolicitudCredito.ToListAsync();
+            return Ok(solicitudes);
+        }
+    }
 }

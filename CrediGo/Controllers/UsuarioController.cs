@@ -27,6 +27,47 @@ namespace CrediGo.API.Controllers
             return Ok(usuario);
         }
 
+        [HttpGet("{id}")]
+        public IActionResult ObtenerUsuario(int id)
+        {
+            var usuario = _context.Usuario.FirstOrDefault(u => u.Id_usuario == id);
+
+            if (usuario == null)
+                return NotFound(new { mensaje = "Usuario no encontrado." });
+
+            // Recomendado: retornar solo lo necesario (sin contraseña)
+            var usuarioDto = new
+            {
+                usuario.Id_usuario,
+                usuario.Username,
+                usuario.Correo,
+                usuario.Contraseña,
+                usuario.Id_rol,
+                usuario.Activo,
+                usuario.Fecha_creacion
+            };
+
+            return Ok(usuarioDto);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult ActualizarUsuario(int id, [FromBody] UsuarioActualizarDTO request)
+        {
+            var usuario = _context.Usuario.FirstOrDefault(u => u.Id_usuario == id);
+            if (usuario == null)
+                return NotFound("Usuario no encontrado");
+
+            if (!string.IsNullOrEmpty(request.Username))
+                usuario.Username = request.Username;
+
+            if (!string.IsNullOrEmpty(request.Contraseña))
+                usuario.Contraseña = request.Contraseña;
+
+            _context.SaveChanges();
+
+            return Ok(usuario);
+        }
+
         [HttpPost("register")]
         public IActionResult Register([FromBody] UsuarioRegistroDTO request)
         {

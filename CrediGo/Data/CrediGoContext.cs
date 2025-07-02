@@ -1,6 +1,7 @@
 ﻿
 using CrediGo.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace CrediGo.API.Data
 {

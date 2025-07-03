@@ -1,7 +1,8 @@
 ﻿using CrediGo.Models;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.Net.NetworkInformation;
 
 namespace CrediGo.API.Data
 {
@@ -12,6 +13,7 @@ namespace CrediGo.API.Data
         public DbSet<Usuario> Usuario { get; set; }
         public DbSet<Cliente> Cliente { get; set; }
         public DbSet<SolicitudCredito> SolicitudCredito { get; set; }
+        public DbSet<Estatus> Estatus { get; set; }  // <-- Esto
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -19,12 +21,17 @@ namespace CrediGo.API.Data
 
             modelBuilder.Entity<SolicitudCredito>(entity =>
             {
-                entity.ToTable("Solicitud_credito"); // tabla real en la BD
+                entity.ToTable("Solicitud_credito");
+                entity.HasKey(e => e.Id_solicitud);
+            });
 
-                entity.HasKey(e => e.Id_solicitud);  // clave primaria
-
-                // Opcional: si tienes más configuraciones como propiedades con tipos, longitudes, relaciones, etc.
+            modelBuilder.Entity<Estatus>(entity =>
+            {
+                entity.ToTable("Estatus");
+                entity.HasKey(e => e.Id_estatus);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
             });
         }
     }
+
 }

@@ -14,5 +14,6 @@
         public string Ciudad { get; set; }
         public string Estado { get; set; }
         public string Codigo_postal { get; set; }
+        public int Id_usuario { get; set; }
     }
 }

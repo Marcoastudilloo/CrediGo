@@ -1,6 +1,7 @@
 ﻿using CrediGo.API.Data;
 using CrediGo.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace CrediGo.API.Controllers
@@ -38,18 +39,29 @@ namespace CrediGo.API.Controllers
                 Ciudad = request.Ciudad,
                 Estado = request.Estado,
                 Codigo_postal = request.Codigo_postal,
-                Cliente_verificado = false
+                Cliente_verificado = false,
+
+                
+                Id_usuario = request.Id_usuario
             };
 
 
             _context.Cliente.Add(cliente);
             await _context.SaveChangesAsync();
 
-            return Ok(new
-            {
-                idCliente = cliente.Id_cliente,
-                mensaje = "Cliente registrado correctamente"
-            });
+            return Ok(cliente);
+
         }
+        [HttpGet("usuario/{idUsuario}")]
+        public async Task<IActionResult> ObtenerSolicitudesPorUsuario(int idUsuario)
+        {
+            var solicitudes = await _context.SolicitudCredito
+                                 .Where(s => s.Id_usuario == idUsuario)
+                                 .ToListAsync();
+
+            return Ok(solicitudes);
+        }
+
+
     }
 }

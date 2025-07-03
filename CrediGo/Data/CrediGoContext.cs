@@ -1,8 +1,5 @@
 ﻿using CrediGo.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Net.NetworkInformation;
 
 namespace CrediGo.API.Data
 {
@@ -13,7 +10,7 @@ namespace CrediGo.API.Data
         public DbSet<Usuario> Usuario { get; set; }
         public DbSet<Cliente> Cliente { get; set; }
         public DbSet<SolicitudCredito> SolicitudCredito { get; set; }
-        public DbSet<Estatus> Estatus { get; set; }  // <-- Esto
+        public DbSet<Estatus> Estatus { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,7 +28,18 @@ namespace CrediGo.API.Data
                 entity.HasKey(e => e.Id_estatus);
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
             });
+
+            modelBuilder.Entity<Cliente>(entity =>
+            {
+                entity.ToTable("Cliente");
+                entity.HasKey(e => e.Id_cliente);
+
+                // Configura la relación entre Cliente y Usuario:
+                entity.HasOne(c => c.Usuario)               // navegación en Cliente
+                      .WithMany(u => u.Clientes)            // navegación en Usuario
+                      .HasForeignKey(c => c.Id_usuario)     // FK en Cliente
+                      .HasConstraintName("FK_Cliente_Usuario");
+            });
         }
     }
-
 }

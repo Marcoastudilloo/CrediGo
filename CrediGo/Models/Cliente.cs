@@ -23,5 +23,11 @@ namespace CrediGo.Models
         public string Estado { get; set; }
         public string Codigo_postal { get; set; }
         public bool Cliente_verificado { get; set; } = false;
+
+        public int Id_usuario { get; set; }
+
+        [ForeignKey("Id_usuario")]
+        public Usuario Usuario { get; set; }
     }
+
 }

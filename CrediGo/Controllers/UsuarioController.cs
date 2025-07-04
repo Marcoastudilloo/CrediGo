@@ -1,6 +1,7 @@
 ﻿using CrediGo.API.Data;
 using CrediGo.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CrediGo.API.Controllers
 {
@@ -67,6 +68,25 @@ namespace CrediGo.API.Controllers
 
             return Ok(usuario);
         }
+
+        [HttpGet("todos")]
+        public async Task<IActionResult> ObtenerTodosLosUsuarios()
+        {
+            var usuarios = await _context.Usuario
+                .Select(u => new
+                {
+                    u.Id_usuario,
+                    u.Username,
+                    u.Correo,
+                    u.Id_rol,
+                    u.Activo,
+                    u.Fecha_creacion
+                })
+                .ToListAsync();
+
+            return Ok(usuarios);
+        }
+
 
         [HttpPost("register")]
         public IActionResult Register([FromBody] UsuarioRegistroDTO request)

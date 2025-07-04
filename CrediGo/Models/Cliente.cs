@@ -24,6 +24,13 @@ namespace CrediGo.Models
         public string Codigo_postal { get; set; }
         public bool Cliente_verificado { get; set; } = false;
 
+        // Nuevo campo para relacionar con Usuario
+        [Column("Id_usuario")]
+        public int? Id_usuario { get; set; }
+
+        // Relación (opcional, para EF)
+        public Usuario Usuario { get; set; }
+
         public int Id_usuario { get; set; }
 
         [ForeignKey("Id_usuario")]

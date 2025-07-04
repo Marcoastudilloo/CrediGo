@@ -1,7 +1,5 @@
 ﻿using CrediGo.Models;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-using System;
 
 namespace CrediGo.API.Data
 {
@@ -12,6 +10,7 @@ namespace CrediGo.API.Data
         public DbSet<Usuario> Usuario { get; set; }
         public DbSet<Cliente> Cliente { get; set; }
         public DbSet<SolicitudCredito> SolicitudCredito { get; set; }
+        public DbSet<Estatus> Estatus { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -19,11 +18,27 @@ namespace CrediGo.API.Data
 
             modelBuilder.Entity<SolicitudCredito>(entity =>
             {
-                entity.ToTable("Solicitud_credito"); // tabla real en la BD
+                entity.ToTable("Solicitud_credito");
+                entity.HasKey(e => e.Id_solicitud);
+            });
 
-                entity.HasKey(e => e.Id_solicitud);  // clave primaria
+            modelBuilder.Entity<Estatus>(entity =>
+            {
+                entity.ToTable("Estatus");
+                entity.HasKey(e => e.Id_estatus);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+            });
 
-                // Opcional: si tienes más configuraciones como propiedades con tipos, longitudes, relaciones, etc.
+            modelBuilder.Entity<Cliente>(entity =>
+            {
+                entity.ToTable("Cliente");
+                entity.HasKey(e => e.Id_cliente);
+
+                // Configura la relación entre Cliente y Usuario:
+                entity.HasOne(c => c.Usuario)               // navegación en Cliente
+                      .WithMany(u => u.Clientes)            // navegación en Usuario
+                      .HasForeignKey(c => c.Id_usuario)     // FK en Cliente
+                      .HasConstraintName("FK_Cliente_Usuario");
             });
         }
     }

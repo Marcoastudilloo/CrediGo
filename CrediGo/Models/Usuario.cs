@@ -14,5 +14,7 @@ namespace CrediGo.Models
         public int Id_rol { get; set; }
         public bool Activo { get; set; } = true;
         public DateTime Fecha_creacion { get; set; } = DateTime.Now;
+
+        public ICollection<Cliente> Clientes { get; set; }
     }
 }

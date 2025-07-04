@@ -39,12 +39,11 @@ namespace CrediGo.API.Controllers
                 Ciudad = request.Ciudad,
                 Estado = request.Estado,
                 Codigo_postal = request.Codigo_postal,
-                Cliente_verificado = false,
-                Id_usuario = request.Id_usuario
+                Id_usuario = request.Id_usuario,
                 Cliente_verificado = false,
 
                 
-                Id_usuario = request.Id_usuario
+                
             };
 
 
@@ -64,15 +63,6 @@ namespace CrediGo.API.Controllers
             return Ok(clientes);
         }
 
-        [HttpGet("por-usuario/{idUsuario}")]
-        public IActionResult ObtenerClientesPorUsuario(int idUsuario)
-        {
-            var clientes = _context.Cliente
-                .Where(c => c.Id_usuario == idUsuario)
-                .ToList();
-
-            return Ok(clientes);
-        }
 
 
 

@@ -53,14 +53,15 @@ namespace CrediGo.API.Controllers
 
         }
         [HttpGet("usuario/{idUsuario}")]
-        public async Task<IActionResult> ObtenerSolicitudesPorUsuario(int idUsuario)
+        public async Task<IActionResult> ObtenerClientesPorUsuario(int idUsuario)
         {
-            var solicitudes = await _context.SolicitudCredito
-                                 .Where(s => s.Id_usuario == idUsuario)
+            var clientes = await _context.Cliente
+                                 .Where(c => c.Id_usuario == idUsuario)
                                  .ToListAsync();
 
-            return Ok(solicitudes);
+            return Ok(clientes);
         }
+
 
 
     }

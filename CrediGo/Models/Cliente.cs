@@ -30,5 +30,11 @@ namespace CrediGo.Models
 
         // Relación (opcional, para EF)
         public Usuario Usuario { get; set; }
+
+        public int Id_usuario { get; set; }
+
+        [ForeignKey("Id_usuario")]
+        public Usuario Usuario { get; set; }
     }
+
 }

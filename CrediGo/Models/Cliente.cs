@@ -29,6 +29,11 @@ namespace CrediGo.Models
         [ForeignKey("Id_usuario")]
 
         public int Id_usuario { get; set; }
+
+        public virtual ICollection<Documento> Documentos { get; set; }
+        public virtual ICollection<SolicitudCredito> Solicitudes { get; set; } = new HashSet<SolicitudCredito>();
+
+
     }
 }
 

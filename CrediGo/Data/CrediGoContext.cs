@@ -11,10 +11,30 @@ namespace CrediGo.API.Data
         public DbSet<Cliente> Cliente { get; set; }
         public DbSet<SolicitudCredito> SolicitudCredito { get; set; }
         public DbSet<Estatus> Estatus { get; set; }
+        public DbSet<Documento> Documento { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Solo la configuración necesaria para Documento
+            modelBuilder.Entity<Documento>(entity =>
+            {
+                entity.ToTable("Documento");
+                entity.HasKey(d => d.Id_documento);
+
+                entity.Property(d => d.Tipo).HasMaxLength(50);
+                entity.Property(d => d.CURP_validado).HasMaxLength(18);
+                entity.Property(d => d.Clave_validada).HasMaxLength(20);
+                entity.Property(d => d.Activo).HasDefaultValue(true);
+
+                entity.HasOne(d => d.Cliente)
+                      .WithMany(c => c.Documentos)  // Asegúrate que Cliente tiene ICollection<Documento> Documentos
+                      .HasForeignKey(d => d.Id_cliente)
+                      .HasConstraintName("FK_Documento_Cliente")
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // Configuración de SolicitudCredito
             modelBuilder.Entity<SolicitudCredito>(entity =>
@@ -31,10 +51,11 @@ namespace CrediGo.API.Data
 
                 // Relación con Cliente
                 entity.HasOne(s => s.Cliente)
-                      .WithMany() // si quieres, agrega colección en Cliente y cámbialo aquí
+                      .WithMany(c => c.Solicitudes) // esto habilita la navegación desde Cliente
                       .HasForeignKey(s => s.Id_cliente)
                       .HasConstraintName("FK_Solicitud_Cliente")
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade); // 🔥 esto activa el borrado en cascada
+
             });
 
             // Configuración de Estatus

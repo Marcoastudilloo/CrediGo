@@ -16,5 +16,9 @@ namespace CrediGo.Models
         public DateTime Fecha_creacion { get; set; } = DateTime.Now;
 
         public ICollection<Cliente> Clientes { get; set; }
+        public ICollection<SolicitudCredito> Solicitudes { get; set; }
+
+
     }
 }
+

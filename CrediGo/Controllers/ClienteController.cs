@@ -39,6 +39,7 @@ namespace CrediGo.API.Controllers
                 Ciudad = request.Ciudad,
                 Estado = request.Estado,
                 Codigo_postal = request.Codigo_postal,
+                Id_usuario = request.Id_usuario,
                 Cliente_verificado = false,
                 Id_usuario = request.Id_usuario
             };
@@ -51,24 +52,16 @@ namespace CrediGo.API.Controllers
 
         }
         [HttpGet("usuario/{idUsuario}")]
-        public async Task<IActionResult> ObtenerSolicitudesPorUsuario(int idUsuario)
+        public async Task<IActionResult> ObtenerClientesPorUsuario(int idUsuario)
         {
-            var solicitudes = await _context.SolicitudCredito
-                                 .Where(s => s.Id_usuario == idUsuario)
+            var clientes = await _context.Cliente
+                                 .Where(c => c.Id_usuario == idUsuario)
                                  .ToListAsync();
-
-            return Ok(solicitudes);
-        }
-
-        [HttpGet("por-usuario/{idUsuario}")]
-        public IActionResult ObtenerClientesPorUsuario(int idUsuario)
-        {
-            var clientes = _context.Cliente
-                .Where(c => c.Id_usuario == idUsuario)
-                .ToList();
 
             return Ok(clientes);
         }
+
+
 
 
     }

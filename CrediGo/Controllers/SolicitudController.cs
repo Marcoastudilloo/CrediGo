@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Text.Json.Serialization;  // <-- Importante
+using System.Text.Json.Serialization;
 
 namespace CrediGo.Controllers
 {
@@ -41,19 +41,51 @@ namespace CrediGo.Controllers
         }
 
         [HttpGet("usuario/{id_usuario}")]
-        public async Task<ActionResult<IEnumerable<SolicitudCredito>>> ObtenerSolicitudesPorUsuario(int id_usuario)
+        public async Task<ActionResult<IEnumerable<object>>> ObtenerSolicitudesPorUsuario(int id_usuario)
         {
             var solicitudes = await _context.SolicitudCredito
                 .Where(s => s.Id_usuario == id_usuario)
+                .Include(s => s.Usuario)
+                .Include(s => s.Cliente)
+                .Select(s => new
+                {
+                    s.Id_solicitud,
+                    s.Id_usuario,
+                    NombreUsuario = s.Usuario != null ? s.Usuario.Username : null,
+                    s.Id_cliente,
+                    NombreCliente = s.Cliente != null ? s.Cliente.Nombre + " " + s.Cliente.Apellido_paterno + " " + s.Cliente.Apellido_materno : null,
+                    s.Monto_solicitado,
+                    s.Plazo_meses,
+                    s.Motivo,
+                    s.Fecha_solicitud,
+                    s.Id_estatus
+                })
                 .ToListAsync();
 
             return Ok(solicitudes);
         }
 
         [HttpGet("todas")]
-        public async Task<ActionResult<IEnumerable<SolicitudCredito>>> ObtenerTodas()
+        public async Task<ActionResult<IEnumerable<object>>> ObtenerTodas()
         {
-            var solicitudes = await _context.SolicitudCredito.ToListAsync();
+            var solicitudes = await _context.SolicitudCredito
+                .Include(s => s.Usuario)
+                .Include(s => s.Cliente)
+                .Select(s => new
+                {
+                    s.Id_solicitud,
+                    s.Id_usuario,
+                    NombreUsuario = s.Usuario != null ? s.Usuario.Username : null,
+                    s.Id_cliente,
+                    NombreCliente = s.Cliente != null ? s.Cliente.Nombre + " " + s.Cliente.Apellido_paterno + " " + s.Cliente.Apellido_materno : null,
+                    s.Monto_solicitado,
+                    s.Plazo_meses,
+                    s.Motivo,
+                    s.Fecha_solicitud,
+                    s.Id_estatus
+                })
+                .ToListAsync();
+
             return Ok(solicitudes);
         }
 
@@ -64,7 +96,6 @@ namespace CrediGo.Controllers
             if (solicitud == null)
                 return NotFound(new { mensaje = "Solicitud no encontrada" });
 
-            // Validar que el estatus exista para evitar error FK
             bool existeEstatus = await _context.Estatus.AnyAsync(e => e.Id_estatus == request.IdEstatus);
             if (!existeEstatus)
                 return BadRequest(new { mensaje = "Estatus inválido" });
@@ -77,10 +108,8 @@ namespace CrediGo.Controllers
 
         public class CambiarEstatusRequest
         {
-            // Aquí indicas el nombre exacto que esperas en el JSON (por ejemplo "idEstatus")
             [JsonPropertyName("idEstatus")]
             public int IdEstatus { get; set; }
         }
-
     }
 }

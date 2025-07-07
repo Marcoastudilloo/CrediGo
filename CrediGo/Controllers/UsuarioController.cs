@@ -117,5 +117,18 @@ namespace CrediGo.API.Controllers
 
             return Ok(nuevoUsuario);
         }
+
+        [HttpDelete("{id}")]
+        public IActionResult EliminarUsuario(int id)
+        {
+            var usuario = _context.Usuario.FirstOrDefault(u => u.Id_usuario == id);
+            if (usuario == null)
+                return NotFound("Usuario no encontrado");
+
+            _context.Usuario.Remove(usuario);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
     }
 }

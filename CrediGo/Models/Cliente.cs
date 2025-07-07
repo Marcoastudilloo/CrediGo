@@ -25,16 +25,12 @@ namespace CrediGo.Models
         public bool Cliente_verificado { get; set; } = false;
 
         // Nuevo campo para relacionar con Usuario
-        [Column("Id_usuario")]
-        public int? Id_usuario { get; set; }
-
-        // Relación (opcional, para EF)
         public Usuario Usuario { get; set; }
+        [ForeignKey("Id_usuario")]
 
         public int Id_usuario { get; set; }
-
-        [ForeignKey("Id_usuario")]
-        public Usuario Usuario { get; set; }
     }
-
 }
+
+    
+

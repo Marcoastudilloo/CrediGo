@@ -5,8 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CrediGo.API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/usuario")]
     public class UsuarioController : ControllerBase
     {
         private readonly CrediGoContext _context;
@@ -58,16 +57,20 @@ namespace CrediGo.API.Controllers
             if (usuario == null)
                 return NotFound("Usuario no encontrado");
 
-            if (!string.IsNullOrEmpty(request.Username))
+            if (request.Username != null)
                 usuario.Username = request.Username;
 
-            if (!string.IsNullOrEmpty(request.Contraseña))
+            if (request.Contraseña != null)
                 usuario.Contraseña = request.Contraseña;
+
+            if (request.Activo.HasValue)
+                usuario.Activo = request.Activo.Value;
 
             _context.SaveChanges();
 
             return Ok(usuario);
         }
+
 
         [HttpGet("todos")]
         public async Task<IActionResult> ObtenerTodosLosUsuarios()
@@ -111,9 +114,5 @@ namespace CrediGo.API.Controllers
 
             return Ok(nuevoUsuario);
         }
-
-
-
-
     }
 }

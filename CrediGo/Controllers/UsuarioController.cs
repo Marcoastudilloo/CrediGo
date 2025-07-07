@@ -24,6 +24,9 @@ namespace CrediGo.API.Controllers
             if (usuario == null)
                 return Unauthorized("Credenciales inválidas.");
 
+            if (!usuario.Activo)
+                return Unauthorized("Tu cuenta está inactiva. Contacta al administrador.");
+
             return Ok(usuario);
         }
 

@@ -40,8 +40,7 @@ namespace CrediGo.API.Controllers
                 Estado = request.Estado,
                 Codigo_postal = request.Codigo_postal,
                 Id_usuario = request.Id_usuario,
-                Cliente_verificado = false,
-                Id_usuario = request.Id_usuario
+                Cliente_verificado = false
             };
 
 

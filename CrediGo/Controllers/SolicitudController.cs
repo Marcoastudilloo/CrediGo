@@ -111,5 +111,20 @@ namespace CrediGo.Controllers
             [JsonPropertyName("idEstatus")]
             public int IdEstatus { get; set; }
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarSolicitud(int id)
+        {
+            var solicitud = await _context.SolicitudCredito.FindAsync(id);
+            if (solicitud == null)
+            {
+                return NotFound(new { mensaje = "Solicitud no encontrada" });
+            }
+
+            _context.SolicitudCredito.Remove(solicitud);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Solicitud eliminada correctamente" });
+        }
+
     }
 }

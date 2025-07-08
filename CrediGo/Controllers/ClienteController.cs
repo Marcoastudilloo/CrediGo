@@ -61,6 +61,7 @@ namespace CrediGo.API.Controllers
             return Ok(clientes);
         }
 
+        
         // PUT: api/cliente/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> EditarCliente(int id, [FromBody] ClienteUpdateDTO dto)
@@ -69,8 +70,9 @@ namespace CrediGo.API.Controllers
             if (cliente == null)
                 return NotFound(new { mensaje = "Cliente no encontrado" });
 
-            if (cliente.Id_usuario != dto.Id_usuario)
-                return Unauthorized(new { mensaje = "No tienes permiso para editar este cliente" });
+            // Quitar esta validación para no requerir idUsuario
+            // if (cliente.Id_usuario != dto.Id_usuario)
+            //     return Unauthorized(new { mensaje = "No tienes permiso para editar este cliente" });
 
             cliente.Nombre = dto.Nombre;
             cliente.Apellido_paterno = dto.Apellido_paterno;
@@ -87,24 +89,23 @@ namespace CrediGo.API.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { mensaje = "Cliente actualizado correctamente" });
         }
-
         // DELETE: api/cliente/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> EliminarCliente(int id, [FromQuery] int idUsuario)
+        public async Task<IActionResult> EliminarCliente(int id)
         {
             var cliente = await _context.Cliente.FindAsync(id);
             if (cliente == null)
                 return NotFound(new { mensaje = "Cliente no encontrado" });
 
-            if (cliente.Id_usuario != idUsuario)
-                return Unauthorized(new { mensaje = "No tienes permiso para borrar este cliente" });
+            // Quitar validación del idUsuario para que no sea necesario enviarlo
+            // if (cliente.Id_usuario != idUsuario)
+            //     return Unauthorized(new { mensaje = "No tienes permiso para borrar este cliente" });
 
             _context.Cliente.Remove(cliente);
             await _context.SaveChangesAsync();
 
             return Ok(new { mensaje = "Cliente eliminado correctamente" });
         }
-
         // GET: api/cliente/{id}/documentos
         [HttpGet("{id}/documentos")]
         public async Task<IActionResult> ObtenerDocumentosCliente(int id)
@@ -127,5 +128,18 @@ namespace CrediGo.API.Controllers
 
             return Ok(documentos);
         }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetClienteById(int id)
+        {
+            var cliente = await _context.Cliente.FindAsync(id);
+
+            if (cliente == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(cliente);
+        }
+
     }
 }

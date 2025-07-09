@@ -125,6 +125,45 @@ namespace CrediGo.Controllers
 
             return Ok(new { mensaje = "Solicitud eliminada correctamente" });
         }
+        [HttpPut("editar/{id}")]
+        public async Task<IActionResult> EditarSolicitud(int id, [FromBody] SolicitudCreditoRequest request)
+        {
+            var solicitud = await _context.SolicitudCredito.FindAsync(id);
+
+            if (solicitud == null)
+            {
+                return NotFound(new { mensaje = "Solicitud no encontrada" });
+            }
+
+            // Solo actualizamos los campos permitidos
+            solicitud.Monto_solicitado = request.Monto_solicitado;
+            solicitud.Plazo_meses = request.Plazo_meses;
+            solicitud.Motivo = request.Motivo;
+
+            _context.SolicitudCredito.Update(solicitud);
+            await _context.SaveChangesAsync();
+
+            // Recargar con relaciones para incluir datos del usuario y cliente
+            var solicitudConRelaciones = await _context.SolicitudCredito
+                .Include(s => s.Usuario)
+                .Include(s => s.Cliente)
+                .Where(s => s.Id_solicitud == id)
+                .Select(s => new
+                {
+                    s.Id_solicitud,
+                    NombreUsuario = s.Usuario != null ? s.Usuario.Username : null,
+                    NombreCliente = s.Cliente != null ? s.Cliente.Nombre + " " + s.Cliente.Apellido_paterno + " " + s.Cliente.Apellido_materno : null,
+                    s.Monto_solicitado,
+                    s.Plazo_meses,
+                    s.Motivo,
+                    s.Fecha_solicitud,
+                    s.Id_estatus
+                })
+                .FirstOrDefaultAsync();
+
+            return Ok(new { mensaje = "Solicitud actualizada correctamente", solicitud = solicitudConRelaciones });
+        }
+
 
     }
 }

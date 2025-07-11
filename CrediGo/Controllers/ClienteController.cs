@@ -141,5 +141,28 @@ namespace CrediGo.API.Controllers
             return Ok(cliente);
         }
 
+        [HttpPut("verificar/{id}")]
+        public async Task<IActionResult> VerificarCliente(int id, [FromBody] VerificarClienteDto dto)
+        {
+            var cliente = await _context.Cliente.FindAsync(id);
+            if (cliente == null)
+            {
+                return NotFound(new { mensaje = "Cliente no encontrado" });
+            }
+
+            cliente.Cliente_verificado = dto.Cliente_verificado;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { mensaje = "Cliente verificado correctamente", cliente });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error al actualizar", error = ex.Message });
+            }
+        }
+
+
     }
 }

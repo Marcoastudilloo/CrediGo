@@ -17,8 +17,8 @@ namespace CrediGo.Models
         public string Clave_elector { get; set; }
         public DateTime? Fecha_nacimiento { get; set; }
         public string Genero { get; set; }
-        public string Calle { get; set; }
-        public string Colonia { get; set; }
+        public string Domicilio { get; set; }
+
         public string Ciudad { get; set; }
         public string Estado { get; set; }
         public string Codigo_postal { get; set; }

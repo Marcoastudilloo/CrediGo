@@ -1,42 +1,46 @@
 ﻿using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace CrediGo.Services.OCR
 {
     public class DataExtractor
     {
-        private string _text;
+        private readonly string _text;
 
         public DataExtractor(string text)
         {
-            _text = text.ToUpper();
+            _text = NormalizarTextoOCR(text.ToUpper());
         }
 
         public object ExtractJson()
         {
-            string curp = ExtractPattern(@"(CURP|CLAVE DE ELECTOR)[\s:]*([A-Z0-9]{18})", 2);
-            string claveElector = ExtractPattern(@"CLAVE DE ELECTOR[\s:]*([A-Z0-9]{18})", 1);
-            string sexo = ExtractSexo(curp);
-            string estado = ExtractPattern(@"ESTADO[\s:]*(\d+)", 1);
-            string municipio = ExtractPattern(@"MUNICIPIO[\s:]*(\d+)", 1);
-            string seccion = ExtractPattern(@"SECCI[OÓ]N[\s:]*(\d+)", 1);
-            string localidad = ExtractPattern(@"LOCALIDAD[\s:]*(\d+)", 1);
-            string emision = ExtractPattern(@"EMISI[OÓ]N[\s:]*(\d+)", 1);
-            string vigencia = ExtractVigencia();
-            (string nombre, string fechaNacimiento) = ExtractNombreYFecha();
+            string curp = ExtractCurpDesdeTexto();
+
+            string claveElector = ExtractPattern(@"CLAVE DE ELECTOR[\s:]*([A-Z0-9]{12,20})", 1);
+            if (claveElector == "No encontrado")
+                claveElector = ExtractPattern(@"ASB[A-Z0-9]{12,}", 0);
+
+            string sexo = ExtraerSexoDesdeCurp(curp);
+            string estado = ExtractEstadoDesdeTexto();
+            string municipio = ExtractMunicipio();
+            string domicilio = ExtractDomicilio(out string cp);
+
+            (string nombre, string apellidoPaterno, string apellidoMaterno) = ExtractNombreCompleto();
+            string fechaNacimiento = ExtraerFechaDesdeCurp(curp);
 
             return new
             {
                 nombre,
+                apellido_paterno = apellidoPaterno,
+                apellido_materno = apellidoMaterno,
                 fecha_nacimiento = fechaNacimiento,
                 curp,
                 clave_elector = claveElector,
                 sexo,
                 estado,
                 municipio,
-                seccion,
-                localidad,
-                emision,
-                vigencia
+                domicilio,
+                codigo_postal = cp
             };
         }
 
@@ -46,80 +50,232 @@ namespace CrediGo.Services.OCR
             return match.Success ? match.Groups[group].Value.Trim() : "No encontrado";
         }
 
-        private string ExtractSexo(string curp)
+        private (string nombre, string apellidoPaterno, string apellidoMaterno) ExtractNombreCompleto()
         {
-            if (!string.IsNullOrEmpty(curp) && curp.Length > 10 && curp != "No encontrado")
+            var lines = _text.Split('\n')
+                             .Select(l => l.Trim())
+                             .Where(l => !string.IsNullOrWhiteSpace(l))
+                             .ToList();
+
+            int index = lines.FindIndex(l => l.Contains("NOMBRE"));
+            if (index >= 0 && index + 3 < lines.Count)
             {
-                return curp[10] == 'H' ? "HOMBRE" : "MUJER";
+                string apellidoPaterno = LimpiarTexto(lines[index + 1]);
+                string apellidoMaterno = LimpiarTexto(lines[index + 2]);
+                string nombre = LimpiarTexto(lines[index + 3]);
+                return (nombre, apellidoPaterno, apellidoMaterno);
             }
+
+            return ("No encontrado", "No encontrado", "No encontrado");
+        }
+
+        private string ExtraerSexoDesdeCurp(string curp)
+        {
+            if (string.IsNullOrEmpty(curp) || curp.Length < 12)
+                return "No encontrado";
+
+            char sexoChar1 = curp[10]; // 11º carácter
+            char sexoChar2 = curp[11]; // 12º carácter
+
+            if (sexoChar1 == 'H' || sexoChar2 == 'H')
+                return "HOMBRE";
+            if (sexoChar1 == 'M' || sexoChar2 == 'M')
+                return "MUJER";
+
             return "No encontrado";
         }
 
-        private (string nombre, string fechaNacimiento) ExtractNombreYFecha()
+
+
+        private string ExtractCurpDesdeTexto()
         {
-            // Extraer fecha primero
-            string fecha = ExtractPattern(@"(\d{2}/\d{2}/\d{4})");
+            var lines = _text.Split('\n')
+                             .Select(l => l.Trim().ToUpper())
+                             .Where(l => !string.IsNullOrWhiteSpace(l))
+                             .ToList();
 
-            // Extraer nombre completo
-            string nombre = "No encontrado";
-
-            // Patrón que busca desde "NOMBRE" hasta la fecha, capturando múltiples líneas
-            var match = Regex.Match(_text, @"NOMBRE[^\n]*\n([A-ZÁÉÍÓÚÜ]+)\s+([A-ZÁÉÍÓÚÜ]+)(?:\s+[A-ZÁÉÍÓÚÜ]+)*\s*(\d{2}/\d{2}/\d{4})");
-
-            if (match.Success)
+            for (int i = 0; i < lines.Count - 1; i++)
             {
-                // Combinar los grupos capturados (apellidos y nombre)
-                nombre = $"{match.Groups[1].Value} {match.Groups[2].Value}";
-
-                // Limpiar posibles artefactos
-                nombre = nombre.Replace("FECHA DE NACIMIENTO", "")
-                               .Replace("NM", "")
-                               .Replace("ÁS", "")
-                               .Replace("\n", " ")
-                               .Trim();
-            }
-
-            // 2. Si no se encontró, buscar líneas después de "NOMBRE"
-            if (nombre == "No encontrado")
-            {
-                var lines = _text.Split('\n');
-                for (int i = 0; i < lines.Length; i++)
+                if (lines[i].Contains("CURP"))
                 {
-                    if (lines[i].Contains("NOMBRE"))
+                    string siguienteLinea = lines[i + 1];
+
+                    // Buscar un bloque alfanumérico largo (16+ caracteres)
+                    Match match = Regex.Match(siguienteLinea, @"[A-Z0-9]{16,22}");
+                    if (match.Success)
                     {
-                        if (i + 1 < lines.Length) nombre = lines[i + 1].Trim();
-                        if (i + 2 < lines.Length) nombre += " " + lines[i + 2].Trim();
-                        break;
+                        string rawCurp = match.Value;
+                        string curpLimpia = LimpiarYRecortarCurp(rawCurp);
+                        return curpLimpia;
                     }
                 }
             }
 
-            // Limpieza final del nombre
-            if (nombre != "No encontrado")
+            // Si no se encontró cerca de "CURP", búsqueda global tolerante
+            var matches = Regex.Matches(_text, @"[A-Z0-9]{18,20}");
+            foreach (Match m in matches)
             {
-                nombre = Regex.Replace(nombre, @"[^A-ZÁÉÍÓÚÜ\s]", "").Trim();
-                nombre = Regex.Replace(nombre, @"\s+", " ");
+                string posible = LimpiarYRecortarCurp(m.Value);
+                if (posible.Length == 18)
+                    return posible;
             }
 
-            return (nombre, fecha);
+            return "No encontrado";
         }
 
-        private string ExtractVigencia()
+        private string LimpiarYRecortarCurp(string input)
         {
-            // Patrones más flexibles para capturar "VIGENCIA" incluso con errores de OCR
-            var match = Regex.Match(_text, @"(VIGENCIA|WIECENCIA|VI6ENCIA|V[I1]GENCIA)[\s:]*(\d{4})", RegexOptions.IgnoreCase);
-            if (!match.Success)
+            string limpio = input.ToUpper()
+                                 .Replace("O", "0")
+                                 .Replace("I", "1")
+                                 .Replace("L", "1")
+                                 .Replace(" ", "")
+                                 .Trim();
+
+            // Recorta a 18 si es necesario
+            return limpio.Length > 18 ? limpio.Substring(0, 18) : limpio;
+        }
+
+        private string ExtraerFechaDesdeCurp(string curp)
+        {
+            if (string.IsNullOrEmpty(curp) || curp.Length < 11)
+                return ExtraerFechaDesdeTextoPlano();
+
+            // 1. Intentar extraer desde posiciones 6 a 11 (índices 5 a 10)
+            string fecha = IntentarFormatearFecha(curp.Substring(5, 6));
+            if (fecha != null)
+                return fecha;
+
+            // 2. Intentar extraer desde posiciones 5 a 10 (índices 4 a 9)
+            if (curp.Length >= 10)
             {
-                // Segundo intento buscando el año directamente después de "EMISIÓN"
-                match = Regex.Match(_text, @"EMISI[OÓ]N[\s:]*\d+\s+(\d{4})");
-            }
-            if (!match.Success)
-            {
-                // Tercer intento buscando cualquier año de 4 dígitos
-                match = Regex.Match(_text, @"20[2-9][0-9]");
+                fecha = IntentarFormatearFecha(curp.Substring(4, 6));
+                if (fecha != null)
+                    return fecha;
             }
 
-            return match.Success ? match.Groups[match.Groups.Count > 1 ? 1 : 0].Value : "No encontrado";
+            // 3. Último recurso: texto plano OCR
+            return ExtraerFechaDesdeTextoPlano();
+        }
+
+        private string IntentarFormatearFecha(string fechaCurp)
+        {
+            // Normalizar posibles errores OCR
+            fechaCurp = fechaCurp.ToUpper()
+                                 .Replace('O', '0')
+                                 .Replace('I', '1')
+                                 .Replace('L', '1');
+
+            if (fechaCurp.Length != 6) return null;
+
+            string anio = fechaCurp.Substring(0, 2);
+            string mes = fechaCurp.Substring(2, 2);
+            string dia = fechaCurp.Substring(4, 2);
+
+            if (!int.TryParse(anio, out int anioNum) ||
+                !int.TryParse(mes, out int mesNum) ||
+                !int.TryParse(dia, out int diaNum))
+                return null;
+
+            anioNum += (anioNum <= 20) ? 2000 : 1900;
+
+            if (mesNum < 1 || mesNum > 12 || diaNum < 1 || diaNum > 31)
+                return null;
+
+            string fechaFormateada = $"{diaNum:D2}/{mesNum:D2}/{anioNum}";
+
+            if (!DateTime.TryParseExact(fechaFormateada, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out _))
+                return null;
+
+            return fechaFormateada;
+        }
+
+
+        private string ExtraerFechaDesdeTextoPlano()
+        {
+            // Buscar la línea con "NOMBRE" seguida de una fecha en formato dd/MM/yyyy
+            var lineas = _text.Split('\n').Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l)).ToList();
+
+            for (int i = 0; i < lineas.Count - 1; i++)
+            {
+                if (lineas[i].Contains("NOMBRE") && Regex.IsMatch(lineas[i + 1], @"\b(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/[0-9]{4}\b"))
+                {
+                    var match = Regex.Match(lineas[i + 1], @"\b(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/[0-9]{4}\b");
+                    if (match.Success)
+                        return match.Value;
+                }
+            }
+
+            // Si no está justo después, buscar cualquier fecha dd/MM/yyyy en todo el texto
+            var matchGeneral = Regex.Match(_text, @"\b(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/[0-9]{4}\b");
+            if (matchGeneral.Success)
+                return matchGeneral.Value;
+
+            return "No encontrado";
+        }
+
+
+
+
+        private string ExtractEstadoDesdeTexto()
+        {
+            var match = Regex.Match(_text, @"([A-ZÁÉÍÓÚÜÑ\s]+),\s*(GRO|CDMX|DF|BC|MEX|JAL|NL|YUC|SON|VER|CHIH|COAH|DUR|OAX|MICH|PUE|QROO|TAMPS|ZAC)", RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups[2].Value.ToUpper() : "No encontrado";
+        }
+
+        private string ExtractMunicipio()
+        {
+            var match = Regex.Match(_text, @"([A-ZÁÉÍÓÚÜÑ\s]+),\s*[A-Z]{2,5}", RegexOptions.IgnoreCase);
+            return match.Success ? LimpiarTexto(match.Groups[1].Value) : "No encontrado";
+        }
+
+        private string ExtractDomicilio(out string cp)
+        {
+            cp = "No encontrado";
+
+            var lines = _text.Split('\n')
+                             .Select(l => l.Trim())
+                             .Where(l => !string.IsNullOrWhiteSpace(l))
+                             .ToList();
+
+            int index = lines.FindIndex(l => l.Contains("DOMICILIO"));
+            if (index >= 0)
+            {
+                var domicilioLines = lines.Skip(index + 1).Take(4).ToList();
+                string domicilioCompleto = string.Join(" ", domicilioLines);
+
+                var matchCP = Regex.Match(domicilioCompleto, @"\b\d{5}\b");
+                if (matchCP.Success)
+                {
+                    cp = matchCP.Value;
+                }
+
+                string domicilioSinCP = matchCP.Success
+                    ? domicilioCompleto.Substring(0, matchCP.Index).Trim()
+                    : domicilioCompleto;
+
+                return domicilioSinCP;
+            }
+
+            return "No encontrado";
+        }
+
+        private string LimpiarTexto(string input)
+        {
+            return Regex.Replace(input, @"[^A-ZÁÉÍÓÚÜÑ\s]", "").Trim();
+        }
+
+        private string NormalizarTextoOCR(string input)
+        {
+            return input
+                .Replace("CLVEDEELECTOR", "CLAVE DE ELECTOR")
+                .Replace("FECHADENACIMIENTO", "FECHA DE NACIMIENTO")
+                .Replace("CURP", "CURP")
+                .Replace("—", "")
+                .Replace("_", "")
+                .Replace("-", " ")
+                .Replace("  ", " ")
+                .Trim();
         }
     }
 }

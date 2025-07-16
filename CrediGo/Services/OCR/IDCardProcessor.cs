@@ -1,4 +1,6 @@
-﻿namespace CrediGo.Services.OCR
+﻿using Tesseract;
+
+namespace CrediGo.Services.OCR
 {
     public class IDCardProcessor
     {
@@ -18,5 +20,21 @@
             var extractor = new DataExtractor(text);
             return extractor.ExtractJson();
         }
+        public string GetTextFromImage()
+        {
+            using var engine = new TesseractEngine(_tessdataPath, "spa", EngineMode.Default);
+            using var img = Pix.LoadFromFile(_imagePath);
+            using var page = engine.Process(img);
+            return page.GetText();
+        }
+
+        public string GetTsv()
+        {
+            using var engine = new TesseractEngine(_tessdataPath, "spa", EngineMode.Default);
+            using var img = Pix.LoadFromFile(_imagePath);
+            using var page = engine.Process(img);
+            return page.GetTsvText(1);
+        }
+
     }
 }

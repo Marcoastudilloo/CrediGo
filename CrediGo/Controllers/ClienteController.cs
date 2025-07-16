@@ -35,8 +35,8 @@ namespace CrediGo.API.Controllers
                 Clave_elector = request.Clave_elector,
                 Fecha_nacimiento = request.Fecha_nacimiento,
                 Genero = request.Genero,
-                Calle = request.Calle,
-                Colonia = request.Colonia,
+                Domicilio = request.Domicilio,
+              
                 Ciudad = request.Ciudad,
                 Estado = request.Estado,
                 Codigo_postal = request.Codigo_postal,
@@ -78,8 +78,8 @@ namespace CrediGo.API.Controllers
             cliente.Apellido_paterno = dto.Apellido_paterno;
             cliente.Apellido_materno = dto.Apellido_materno;
             cliente.Clave_elector = dto.Clave_elector;
-            cliente.Calle = dto.Calle;
-            cliente.Colonia = dto.Colonia;
+            cliente.Domicilio = dto.Domicilio;
+          
             cliente.Ciudad = dto.Ciudad;
             cliente.Estado = dto.Estado;
             cliente.Codigo_postal = dto.Codigo_postal;

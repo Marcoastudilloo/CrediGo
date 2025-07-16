@@ -2,7 +2,6 @@
 using CrediGo.Services.OCR;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace CrediGo.Controllers
 {
     [ApiController]
@@ -24,6 +23,7 @@ namespace CrediGo.Controllers
             if (foto_ine == null || foto_ine.Length == 0)
                 return BadRequest("Imagen no válida");
 
+            // Crear carpeta temporal para guardar la imagen
             var uploadsFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "ocr-temp");
             Directory.CreateDirectory(uploadsFolder);
 
@@ -34,17 +34,20 @@ namespace CrediGo.Controllers
             try
             {
                 var processor = new IDCardProcessor(filePath, @"./tessdata");
+
+                //var textoPlano = processor.GetTextFromImage();
+                
                 var resultado = processor.ExtractJson();
 
-                System.IO.File.Delete(filePath);
+                System.IO.File.Delete(filePath); // Limpieza del archivo temporal
 
                 return Ok(resultado);
+
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error OCR: {ex.Message}");
+                return StatusCode(500, new { error = "Error OCR: " + ex.Message });
             }
         }
-
     }
 }

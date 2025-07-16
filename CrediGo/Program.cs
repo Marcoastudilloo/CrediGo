@@ -1,6 +1,7 @@
 using CrediGo.API.Data;
-using Microsoft.EntityFrameworkCore;
+using CrediGo.Services;
 using CrediGo.Swagger;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
+
+builder.Services.AddHttpClient<VerificamexService>();
+
 
 builder.Services.AddEndpointsApiExplorer();
 

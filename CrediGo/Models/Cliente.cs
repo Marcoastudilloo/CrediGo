@@ -33,6 +33,7 @@ namespace CrediGo.Models
         public virtual ICollection<Documento> Documentos { get; set; }
         public virtual ICollection<SolicitudCredito> Solicitudes { get; set; } = new HashSet<SolicitudCredito>();
 
+        public ICollection<ValidacionCliente> ValidacionesCliente { get; set; }
 
     }
 }

@@ -13,6 +13,7 @@ namespace CrediGo.API.Data
         public DbSet<Estatus> Estatus { get; set; }
         public DbSet<Documento> Documento { get; set; }
 
+        public DbSet<ValidacionCliente> ValidacionCliente { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -86,11 +87,24 @@ namespace CrediGo.API.Data
                 entity.ToTable("Usuario");
                 entity.HasKey(u => u.Id_usuario);
 
-                // Si quieres puedes configurar propiedades aquí, por ejemplo:
                 entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.Correo).HasMaxLength(100);
                 entity.Property(u => u.Contraseña).IsRequired().HasMaxLength(100);
             });
+
+            // Configuración de ValidacionCliente
+            modelBuilder.Entity<ValidacionCliente>(entity =>
+            {
+                entity.ToTable("ValidacionCliente");
+                entity.HasKey(vc => vc.Id_validacion);
+
+                entity.HasOne(vc => vc.Cliente)
+                      .WithMany(c => c.ValidacionesCliente) // Asegúrate de tener esta colección en Cliente
+                      .HasForeignKey(vc => vc.Id_cliente)
+                      .HasConstraintName("FK_Validacion_Cliente")
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
         }
     }
 }

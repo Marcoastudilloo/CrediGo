@@ -55,7 +55,7 @@ namespace CrediGo.API.Controllers
         public async Task<IActionResult> ObtenerClientesPorUsuario(int idUsuario)
         {
             var clientes = await _context.Cliente
-                                 .Where(c => c.Id_usuario == idUsuario && c.Cliente_verificado == false)
+                                 .Where(c => c.Id_usuario == idUsuario)
                                  .ToListAsync();
 
             return Ok(clientes);

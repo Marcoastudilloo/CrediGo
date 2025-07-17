@@ -7,6 +7,8 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CrediGo.Services;
+using CrediGo.Models.Verificamex;
 
 namespace CrediGo.Controllers
 {
@@ -40,14 +42,14 @@ namespace CrediGo.Controllers
             {
                 await request.ArchivoINE.CopyToAsync(ms);
                 ineBytes = ms.ToArray();
-            }
+        }
 
             // Convertir PDF base64 a bytes
             byte[] pdfBytes = Convert.FromBase64String(pdfBase64);
 
             // Crear cliente con datos planos (sin JSON ni archivos)
             var cliente = new Cliente
-            {
+        {
                 Nombre = request.Nombre,
                 Apellido_paterno = request.Apellido_paterno,
                 Apellido_materno = request.Apellido_materno,
@@ -88,5 +90,6 @@ namespace CrediGo.Controllers
                 id_cliente = cliente.Id_cliente
             });
         }
+
     }
 }

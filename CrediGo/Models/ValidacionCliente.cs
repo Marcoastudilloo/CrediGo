@@ -17,14 +17,17 @@ namespace CrediGo.Models
 
         public DateTime? Fecha_expiracion { get; set; }
 
-        public string OCR_texto_plano { get; set; }
 
-        public string OCR_datos { get; set; }
+
+        public string? OCR_texto_plano { get; set; }
+        public string? OCR_datos { get; set; }
+        public string? Respuesta_verificamex { get; set; }
+
 
         public byte[] Archivo_ine { get; set; }
 
         public byte[] Pdf_verificacion { get; set; }
 
-        public string Respuesta_verificamex { get; set; }
+        
     }
 }

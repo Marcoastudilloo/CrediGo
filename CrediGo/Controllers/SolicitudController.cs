@@ -64,7 +64,9 @@ namespace CrediGo.Controllers
                     s.Plazo_meses,
                     s.Motivo,
                     s.Fecha_solicitud,
-                    s.Id_estatus
+                    s.Id_estatus,
+                    s.Tasa_interes,              
+                    s.Pago_mensual_estimado
                 })
                 .ToListAsync();
 
@@ -88,7 +90,9 @@ namespace CrediGo.Controllers
                     s.Plazo_meses,
                     s.Motivo,
                     s.Fecha_solicitud,
-                    s.Id_estatus
+                    s.Id_estatus,
+                    s.Tasa_interes,               // <-- agregar esto
+                    s.Pago_mensual_estimado
                 })
                 .ToListAsync();
 
@@ -131,6 +135,8 @@ namespace CrediGo.Controllers
 
             return Ok(new { mensaje = "Solicitud eliminada correctamente" });
         }
+
+
         [HttpPut("editar/{id}")]
         public async Task<IActionResult> EditarSolicitud(int id, [FromBody] SolicitudCreditoRequest request)
         {
@@ -141,10 +147,11 @@ namespace CrediGo.Controllers
                 return NotFound(new { mensaje = "Solicitud no encontrada" });
             }
 
-            // Solo actualizamos los campos permitidos
+            // Actualizamos los campos permitidos, incluyendo Observaciones
             solicitud.Monto_solicitado = request.Monto_solicitado;
             solicitud.Plazo_meses = request.Plazo_meses;
             solicitud.Motivo = request.Motivo;
+            solicitud.Observaciones = request.Observaciones ?? string.Empty;  // <-- Aquí la agregamos
 
             _context.SolicitudCredito.Update(solicitud);
             await _context.SaveChangesAsync();
@@ -163,13 +170,15 @@ namespace CrediGo.Controllers
                     s.Plazo_meses,
                     s.Motivo,
                     s.Fecha_solicitud,
-                    s.Id_estatus
+                    s.Id_estatus,
+                    s.Tasa_interes,
+                    s.Pago_mensual_estimado,
+                    s.Observaciones   // <-- Opcional: incluir en la respuesta si quieres
                 })
                 .FirstOrDefaultAsync();
 
             return Ok(new { mensaje = "Solicitud actualizada correctamente", solicitud = solicitudConRelaciones });
         }
-
 
     }
 }

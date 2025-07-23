@@ -1,6 +1,7 @@
 ﻿using CrediGo.Models;
 using CrediGo.Services.OCR;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 
 namespace CrediGo.Controllers
 {
@@ -15,6 +16,7 @@ namespace CrediGo.Controllers
             _env = env;
         }
 
+
         [HttpPost("ine")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ProcesarINE([FromForm] ProcesarINERequest request)
@@ -23,8 +25,7 @@ namespace CrediGo.Controllers
             if (foto_ine == null || foto_ine.Length == 0)
                 return BadRequest("Imagen no válida");
 
-            // Crear carpeta temporal para guardar la imagen
-            var uploadsFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "ocr-temp");
+            var uploadsFolder = Path.Combine(_env.ContentRootPath, "ocr-temp");
             Directory.CreateDirectory(uploadsFolder);
 
             var filePath = Path.Combine(uploadsFolder, Guid.NewGuid() + Path.GetExtension(foto_ine.FileName));
@@ -33,21 +34,29 @@ namespace CrediGo.Controllers
 
             try
             {
-                var processor = new IDCardProcessor(filePath, @"./tessdata");
+                var tessdataPath = Path.Combine(_env.ContentRootPath, "tessdata");
 
-                //var textoPlano = processor.GetTextFromImage();
-                
+                // DEBUG: imprimir rutas y existencia del archivo
+                Console.WriteLine($"[DEBUG] ContentRootPath: {_env.ContentRootPath}");
+                Console.WriteLine($"[DEBUG] tessdataPath final: {tessdataPath}");
+                Console.WriteLine($"[DEBUG] spa.traineddata existe: {System.IO.File.Exists(Path.Combine(tessdataPath, "spa.traineddata"))}");
+
+                var processor = new IDCardProcessor(filePath, tessdataPath);
                 var resultado = processor.ExtractJson();
 
-                System.IO.File.Delete(filePath); // Limpieza del archivo temporal
+                System.IO.File.Delete(filePath);
 
                 return Ok(resultado);
-
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Error OCR: " + ex.Message });
+                // Loguea la excepción completa para depuración
+                Console.WriteLine("[ERROR] Exception en ProcesarINE: " + ex.ToString());
+
+                return StatusCode(500, new { error = "Error OCR: " + ex.Message, detalle = ex.ToString() });
             }
         }
+
+
     }
 }

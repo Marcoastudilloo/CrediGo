@@ -15,14 +15,25 @@ namespace CrediGo.Services.OCR
 
         public string GetTextFromImage()
         {
-            Console.WriteLine($"[DEBUG] Tessdata path: {_tessdataPath}");
-            Console.WriteLine($"[DEBUG] Archivo existe: {System.IO.File.Exists(Path.Combine(_tessdataPath, "spa.traineddata"))}");
+            try
+            {
+                var trainedDataPath = Path.Combine(_tessdataPath, "spa.traineddata");
+                Console.WriteLine($"[DEBUG] Tessdata path: {_tessdataPath}");
+                Console.WriteLine($"[DEBUG] Archivo existe: {File.Exists(trainedDataPath)}");
 
-            using var engine = new TesseractEngine(_tessdataPath, "spa", EngineMode.Default);
-            using var img = Pix.LoadFromFile(_imagePath);
-            using var page = engine.Process(img);
-            return page.GetText();
-
+                using var engine = new TesseractEngine(_tessdataPath, "spa", EngineMode.Default);
+                using var img = Pix.LoadFromFile(_imagePath);
+                using var page = engine.Process(img);
+                return page.GetText();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[ERROR] Excepción en OCRProcessor.GetTextFromImage: " + ex.ToString());
+                throw;
+            }
         }
+
+
+
     }
 }

@@ -15,11 +15,20 @@ namespace CrediGo.Services.OCR
 
         public object ExtractJson()
         {
-            var ocr = new OCRProcessor(_imagePath, _tessdataPath);
-            var text = ocr.GetTextFromImage();
-            var extractor = new DataExtractor(text);
-            return extractor.ExtractJson();
+            try
+            {
+                var ocr = new OCRProcessor(_imagePath, _tessdataPath);
+                var text = ocr.GetTextFromImage();
+                var extractor = new DataExtractor(text);
+                return extractor.ExtractJson();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[ERROR] Excepción en IDCardProcessor.ExtractJson: " + ex);
+                throw;
+            }
         }
+
         public string GetTextFromImage()
         {
             using var engine = new TesseractEngine(_tessdataPath, "spa", EngineMode.Default);

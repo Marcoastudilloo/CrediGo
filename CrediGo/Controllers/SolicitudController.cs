@@ -1,5 +1,6 @@
 ﻿using CrediGo.API.Data;
 using CrediGo.Models;
+using CrediGo.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -30,14 +31,19 @@ namespace CrediGo.Controllers
                 Monto_solicitado = solicitud.Monto_solicitado,
                 Plazo_meses = solicitud.Plazo_meses,
                 Motivo = solicitud.Motivo,
-                Fecha_solicitud = System.DateTime.UtcNow,
-                Id_estatus = 1 // Asumiendo 1 = "pendiente"
+                Tasa_interes = solicitud.Tasa_interes,
+                Fecha_inicio = solicitud.Fecha_inicio,
+                Fecha_fin = solicitud.Fecha_fin,
+                Observaciones = solicitud.Observaciones,
+                Fecha_solicitud = DateTime.UtcNow,
+                Id_estatus = 1, // Estado pendiente por default
+                Pago_mensual_estimado = solicitud.Pago_mensual_estimado // <-- directo del frontend
             };
 
             _context.SolicitudCredito.Add(nueva);
             await _context.SaveChangesAsync();
 
-            return Ok(nueva);
+            return Ok(nueva); // o podrías devolver solo un DTO reducido si prefieres
         }
 
         [HttpGet("usuario/{id_usuario}")]

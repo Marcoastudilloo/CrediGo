@@ -29,10 +29,11 @@ namespace CrediGo.Models
         public Estatus Estatus { get; set; }
 
         // NUEVOS CAMPOS
-        public decimal Tasa_interes { get; set; }  // En porcentaje, ej. 12.5
-        public DateTime Fecha_inicio { get; set; }
-        public DateTime Fecha_fin { get; set; }
-        public string Observaciones { get; set; }
+        public decimal Tasa_interes { get; set; } 
+        // En porcentaje, ej. 12.5
+        public DateTime? Fecha_inicio { get; set; }
+        public DateTime? Fecha_fin { get; set; }
+        public string? Observaciones { get; set; }
 
         public decimal? Pago_mensual_estimado { get; set; } 
     }

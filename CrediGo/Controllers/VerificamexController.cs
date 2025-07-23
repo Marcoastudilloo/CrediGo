@@ -1,14 +1,15 @@
 ﻿using CrediGo.API.Data;
 using CrediGo.Models;
 using CrediGo.Models.Verificamex;
+using CrediGo.Models.Verificamex;
+using CrediGo.Services;
 using CrediGo.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using CrediGo.Services;
-using CrediGo.Models.Verificamex;
 
 namespace CrediGo.Controllers
 {
@@ -28,6 +29,13 @@ namespace CrediGo.Controllers
         [HttpPost("validar-y-guardar")]
         public async Task<IActionResult> ValidarYGuardar([FromForm] ValidacionClienteRequest request)
         {
+
+            var curpExistente = await _context.Cliente.FirstOrDefaultAsync(c => c.Curp == request.Curp);
+            if (curpExistente != null)
+            {
+                return Conflict(new { mensaje = "La CURP ya está registrada" });
+            }
+
             var resultado = await _verificamexService.ValidarCurpConPdfAsync(request.Curp);
 
             if (resultado == null || resultado.data == null || resultado.data.citizen == null || !resultado.data.citizen.status)

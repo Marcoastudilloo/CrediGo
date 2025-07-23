@@ -26,6 +26,15 @@ namespace CrediGo.API.Controllers
             if (string.IsNullOrEmpty(request.Nombre) || string.IsNullOrEmpty(request.Curp))
                 return BadRequest(new { mensaje = "Nombre y CURP son obligatorios" });
 
+            // Verificar si ya existe un cliente con la misma CURP
+            var curpExistente = await _context.Cliente
+                .AnyAsync(c => c.Curp == request.Curp);
+
+            if (curpExistente)
+            {
+                return Conflict(new { mensaje = "Ya existe un cliente registrado con esa CURP." });
+            }
+
             var cliente = new Cliente
             {
                 Nombre = request.Nombre,

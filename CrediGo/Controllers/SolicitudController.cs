@@ -66,7 +66,8 @@ namespace CrediGo.Controllers
                     s.Fecha_solicitud,
                     s.Id_estatus,
                     s.Tasa_interes,              
-                    s.Pago_mensual_estimado
+                    s.Pago_mensual_estimado,
+                    s.Observaciones
                 })
                 .ToListAsync();
 
@@ -92,7 +93,8 @@ namespace CrediGo.Controllers
                     s.Fecha_solicitud,
                     s.Id_estatus,
                     s.Tasa_interes,               // <-- agregar esto
-                    s.Pago_mensual_estimado
+                    s.Pago_mensual_estimado,
+                    s.Observaciones
                 })
                 .ToListAsync();
 
@@ -173,7 +175,7 @@ namespace CrediGo.Controllers
                     s.Id_estatus,
                     s.Tasa_interes,
                     s.Pago_mensual_estimado,
-                    s.Observaciones   // <-- Opcional: incluir en la respuesta si quieres
+                    s.Observaciones  
                 })
                 .FirstOrDefaultAsync();
 

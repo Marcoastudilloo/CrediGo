@@ -24,6 +24,14 @@ builder.Services.AddControllers();
 
 builder.Services.AddHttpClient<VerificamexService>();
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(Int32.Parse(port));
+});
+
+
 
 builder.Services.AddEndpointsApiExplorer();
 

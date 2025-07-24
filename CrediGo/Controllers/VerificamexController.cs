@@ -30,6 +30,31 @@ namespace CrediGo.Controllers
         public async Task<IActionResult> ValidarYGuardar([FromForm] ValidacionClienteRequest request)
         {
 
+
+            var expiradas = await _context.ValidacionCliente
+        .Where(v => v.Fecha_expiracion <= DateTime.Now)
+        .ToListAsync();
+
+            if (expiradas.Any())
+            {
+                // Actualizar clientes afectados
+                foreach (var val in expiradas)
+                {
+                    var Cliente = await _context.Cliente.FindAsync(val.Id_cliente);
+                    if (Cliente != null)
+                    {
+                        Cliente.Cliente_verificado = false;
+                        _context.Cliente.Update(Cliente);
+                    }
+                }
+
+                // Borrar las validaciones expiradas
+                _context.ValidacionCliente.RemoveRange(expiradas);
+
+                await _context.SaveChangesAsync();
+            }
+
+
             var curpExistente = await _context.Cliente.FirstOrDefaultAsync(c => c.Curp == request.Curp);
             if (curpExistente != null)
             {
@@ -39,7 +64,22 @@ namespace CrediGo.Controllers
             var resultado = await _verificamexService.ValidarCurpConPdfAsync(request.Curp);
 
             if (resultado == null || resultado.data == null || resultado.data.citizen == null || !resultado.data.citizen.status)
+            {
+                // Guardar bitácora fallo
+                var bitacoraFallida = new Bitacora
+                {
+                    Id_usuario = request.Id_usuario,
+                    Accion = "VALIDAR_CURP",
+                    Descripcion = $"Intento fallido de validación de CURP: {request.Curp}",
+                    Entidad_afectada = "Cliente",
+                    Id_afectado = null
+                };
+
+                await _context.Bitacora.AddAsync(bitacoraFallida);
+                await _context.SaveChangesAsync();
+
                 return BadRequest(new { mensaje = "CURP no válida o no encontrada en RENAPO" });
+            }
 
             var datos = resultado.data.citizen.registros[0];
             var pdfBase64 = resultado.data.pdf;
@@ -50,14 +90,14 @@ namespace CrediGo.Controllers
             {
                 await request.ArchivoINE.CopyToAsync(ms);
                 ineBytes = ms.ToArray();
-        }
+            }
 
             // Convertir PDF base64 a bytes
             byte[] pdfBytes = Convert.FromBase64String(pdfBase64);
 
-            // Crear cliente con datos planos (sin JSON ni archivos)
+            // Crear cliente
             var cliente = new Cliente
-        {
+            {
                 Nombre = request.Nombre,
                 Apellido_paterno = request.Apellido_paterno,
                 Apellido_materno = request.Apellido_materno,
@@ -76,7 +116,7 @@ namespace CrediGo.Controllers
             await _context.Cliente.AddAsync(cliente);
             await _context.SaveChangesAsync();
 
-            // Crear validación con datos binarios y JSON
+            // Crear validación
             var validacion = new ValidacionCliente
             {
                 Id_cliente = cliente.Id_cliente,
@@ -92,23 +132,18 @@ namespace CrediGo.Controllers
             await _context.ValidacionCliente.AddAsync(validacion);
             await _context.SaveChangesAsync();
 
-            if (resultado == null || resultado.data == null || resultado.data.citizen == null || !resultado.data.citizen.status)
+            // Guardar bitácora éxito
+            var bitacoraExitosa = new Bitacora
             {
-                // Registrar en bitácora intento fallido
-                var bitacoraFallida = new Bitacora
-                {
-                    Id_usuario = request.Id_usuario,
-                    Accion = "VALIDAR_CURP",
-                    Descripcion = $"Intento fallido de validación de CURP: {request.Curp}",
-                    Entidad_afectada = "Cliente",
-                    Id_afectado = null // como no se creó cliente, puede ir null
-                };
+                Id_usuario = request.Id_usuario,
+                Accion = "VALIDAR_CURP",
+                Descripcion = $"Validación exitosa de CURP y registro de cliente Id: {cliente.Id_cliente}",
+                Entidad_afectada = "Cliente",
+                Id_afectado = cliente.Id_cliente
+            };
 
-                await _context.Bitacora.AddAsync(bitacoraFallida);
-                await _context.SaveChangesAsync();
-
-                return BadRequest(new { mensaje = "CURP no válida o no encontrada en RENAPO" });
-            }
+            await _context.Bitacora.AddAsync(bitacoraExitosa);
+            await _context.SaveChangesAsync();
 
             return Ok(new
             {
@@ -116,7 +151,6 @@ namespace CrediGo.Controllers
                 id_cliente = cliente.Id_cliente
             });
         }
-
 
     }
 }

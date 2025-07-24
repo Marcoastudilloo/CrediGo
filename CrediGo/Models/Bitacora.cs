@@ -1,7 +1,11 @@
-﻿namespace CrediGo.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CrediGo.Models
 {
     public class Bitacora
     {
+
+        [Key]
         public int Id_bitacora { get; set; }
         public int Id_usuario { get; set; }
         public string Accion { get; set; } = null!;

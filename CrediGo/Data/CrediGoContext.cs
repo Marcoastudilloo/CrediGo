@@ -49,21 +49,23 @@ namespace CrediGo.API.Data
                 entity.ToTable("Solicitud_credito");
                 entity.HasKey(e => e.Id_solicitud);
 
-                // Relación con Usuario
+                entity.Property(e => e.Id_solicitud)
+                      .ValueGeneratedOnAdd();
+
+                // Relaciones
                 entity.HasOne(s => s.Usuario)
-                      .WithMany(u => u.Solicitudes)   // Añade esta colección en Usuario si quieres
+                      .WithMany(u => u.Solicitudes)
                       .HasForeignKey(s => s.Id_usuario)
                       .HasConstraintName("FK_Solicitud_Usuario")
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con Cliente
                 entity.HasOne(s => s.Cliente)
-                      .WithMany(c => c.Solicitudes) // esto habilita la navegación desde Cliente
+                      .WithMany(c => c.Solicitudes)
                       .HasForeignKey(s => s.Id_cliente)
                       .HasConstraintName("FK_Solicitud_Cliente")
-                      .OnDelete(DeleteBehavior.Cascade); // 🔥 esto activa el borrado en cascada
-
+                      .OnDelete(DeleteBehavior.Cascade);
             });
+
 
             // Configuración de Estatus
             modelBuilder.Entity<Estatus>(entity =>

@@ -24,6 +24,18 @@ namespace CrediGo.Controllers
         [HttpPost("crear")]
         public async Task<ActionResult<SolicitudCredito>> CrearSolicitud([FromBody] SolicitudCreditoRequest solicitud)
         {
+
+            // Verificar que el cliente exista y esté validado
+            var cliente = await _context.Cliente.FindAsync(solicitud.Id_cliente);
+            if (cliente == null)
+            {
+                return NotFound(new { mensaje = "Cliente no encontrado" });
+            }
+
+            if (!cliente.Cliente_verificado)
+            {
+                return BadRequest(new { mensaje = "El cliente no está validado. No puede crear solicitudes." });
+            }
             var nueva = new SolicitudCredito
             {
                 Id_usuario = solicitud.Id_usuario,
@@ -43,7 +55,8 @@ namespace CrediGo.Controllers
             _context.SolicitudCredito.Add(nueva);
             await _context.SaveChangesAsync();
 
-            return Ok(nueva); // o podrías devolver solo un DTO reducido si prefieres
+            return Ok(new { mensaje = "Solicitud creada exitosamente", id = nueva.Id_solicitud });
+
         }
 
         [HttpGet("usuario/{id_usuario}")]

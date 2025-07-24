@@ -1,4 +1,5 @@
 using CrediGo.API.Data;
+using CrediGo.Models;
 using CrediGo.Services;
 using CrediGo.Swagger;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.OperationFilter<AddFileParamOperationFilter>();
 });
+builder.Services.AddSignalR();
 
 
 var app = builder.Build();
@@ -55,5 +57,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapHub<NotificacionesHub>("/notificacioneshub");
 app.Run();

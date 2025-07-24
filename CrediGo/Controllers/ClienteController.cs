@@ -2,6 +2,7 @@
 using CrediGo.Models;
 using CrediGo.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,10 +14,12 @@ namespace CrediGo.API.Controllers
     public class ClienteController : ControllerBase
     {
         private readonly CrediGoContext _context;
+        private readonly IHubContext<NotificacionesHub> _hubContext;
 
-        public ClienteController(CrediGoContext context)
+        public ClienteController(CrediGoContext context, IHubContext<NotificacionesHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // POST: api/cliente
@@ -34,6 +37,7 @@ namespace CrediGo.API.Controllers
             {
                 return Conflict(new { mensaje = "Ya existe un cliente registrado con esa CURP." });
             }
+
 
             var cliente = new Cliente
             {
@@ -55,6 +59,12 @@ namespace CrediGo.API.Controllers
 
             _context.Cliente.Add(cliente);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("NotificacionNuevaSolicitud", new
+            {
+                mensaje = $"Nueva solicitud registrada de {cliente.Nombre} {cliente.Apellido_paterno}",
+                clienteId = cliente.Id_cliente
+            });
 
             return Ok(cliente);
         }

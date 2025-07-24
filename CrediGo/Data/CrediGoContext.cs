@@ -15,6 +15,12 @@ namespace CrediGo.API.Data
 
         public DbSet<ValidacionCliente> ValidacionCliente { get; set; }
 
+        public DbSet<Bitacora> Bitacora { get; set; } = null!;
+
+
+
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

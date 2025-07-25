@@ -18,7 +18,6 @@ namespace CrediGo.Models
         public ICollection<Cliente> Clientes { get; set; }
         public ICollection<SolicitudCredito> Solicitudes { get; set; }
 
-
     }
 }
 

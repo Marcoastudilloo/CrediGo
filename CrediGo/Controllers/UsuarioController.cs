@@ -1,8 +1,8 @@
 ﻿using CrediGo.API.Data;
 using CrediGo.Models;
+using Microsoft.AspNetCore.Identity; // Hasher
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity; // Hasher
 
 namespace CrediGo.API.Controllers
 {
@@ -11,10 +11,12 @@ namespace CrediGo.API.Controllers
     {
         private readonly CrediGoContext _context;
         private readonly PasswordHasher<Usuario> _passwordHasher = new();
+        private readonly IEmailService _emailService;
 
-        public UsuarioController(CrediGoContext context)
+        public UsuarioController(CrediGoContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
@@ -91,8 +93,7 @@ namespace CrediGo.API.Controllers
                 usuario.Username,
                 usuario.Correo,
                 usuario.Id_rol,
-                usuario.Activo,
-                usuario.Fecha_creacion
+                usuario.Activo
             });
         }
 
@@ -158,5 +159,28 @@ namespace CrediGo.API.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("recuperar")]
+        public async Task<IActionResult> RecuperarContrasena([FromBody] RecuperarContrasenaRequest request)
+        {
+            var usuario = await _context.Usuario
+                .FirstOrDefaultAsync(u => u.Correo == request.Correo);
+
+            if (usuario == null)
+                return NotFound("Correo no encontrado");
+
+            // Generar token de recuperación temporal (puede ser un GUID o JWT simple)
+            var token = Guid.NewGuid().ToString();
+
+            // Enviar correo con el token o link de recuperación
+            var urlRecuperacion = $"http://192.168.0.31/recuperar?token={token}";
+            var mensaje = $"Hola {usuario.Username},\n\nUsa el siguiente enlace para restablecer tu contraseña:\n{urlRecuperacion}\n\nEste enlace expira en 15 minutos.";
+
+            await _emailService.EnviarCorreoAsync(usuario.Correo, "Recuperar contraseña", mensaje);
+
+            return Ok("Correo de recuperación enviado");
+        }
+
+
     }
 }

@@ -36,6 +36,16 @@ namespace CrediGo.Controllers
             {
                 return BadRequest(new { mensaje = "El cliente no está validado. No puede crear solicitudes." });
             }
+
+            var tieneSolicitudActiva = await _context.SolicitudCredito
+            .AnyAsync(s => s.Id_cliente == solicitud.Id_cliente &&
+                   (s.Id_estatus == 1 || s.Id_estatus == 2)); // 1: Pendiente, 2: En revisión (por ejemplo)
+
+            if (tieneSolicitudActiva)
+            {
+                return BadRequest(new { mensaje = "El cliente ya tiene una solicitud activa. No puede crear otra." });
+            }
+
             var nueva = new SolicitudCredito
             {
                 Id_usuario = solicitud.Id_usuario,

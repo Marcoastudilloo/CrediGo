@@ -36,6 +36,16 @@ namespace CrediGo.Controllers
             {
                 return BadRequest(new { mensaje = "El cliente no está validado. No puede crear solicitudes." });
             }
+
+            var tieneSolicitudActiva = await _context.SolicitudCredito
+.AnyAsync(s => s.Id_cliente == solicitud.Id_cliente &&
+       (s.Id_estatus == 1 || s.Id_estatus == 2)); // 1: Pendiente, 2: En revisión (por ejemplo)
+
+            if (tieneSolicitudActiva)
+            {
+                return BadRequest(new { mensaje = "El cliente ya tiene una solicitud activa. No puede crear otra." });
+            }
+
             var nueva = new SolicitudCredito
             {
                 Id_usuario = solicitud.Id_usuario,
@@ -72,20 +82,25 @@ namespace CrediGo.Controllers
                     s.Id_usuario,
                     NombreUsuario = s.Usuario != null ? s.Usuario.Username : null,
                     s.Id_cliente,
-                    NombreCliente = s.Cliente != null ? s.Cliente.Nombre + " " + s.Cliente.Apellido_paterno + " " + s.Cliente.Apellido_materno : null,
+                    NombreCliente = s.Cliente != null
+                        ? s.Cliente.Nombre + " " + s.Cliente.Apellido_paterno + " " + s.Cliente.Apellido_materno
+                        : null,
                     s.Monto_solicitado,
                     s.Plazo_meses,
                     s.Motivo,
                     s.Fecha_solicitud,
                     s.Id_estatus,
-                    s.Tasa_interes,              
+                    s.Tasa_interes,
                     s.Pago_mensual_estimado,
-                    s.Observaciones
+                    s.Observaciones,
+                    CiudadCliente = s.Cliente != null ? s.Cliente.Ciudad : null,
+                    EstadoCliente = s.Cliente != null ? s.Cliente.Estado : null
                 })
                 .ToListAsync();
 
             return Ok(solicitudes);
         }
+
 
         [HttpGet("todas")]
         public async Task<ActionResult<IEnumerable<object>>> ObtenerTodas()
@@ -99,20 +114,27 @@ namespace CrediGo.Controllers
                     s.Id_usuario,
                     NombreUsuario = s.Usuario != null ? s.Usuario.Username : null,
                     s.Id_cliente,
-                    NombreCliente = s.Cliente != null ? s.Cliente.Nombre + " " + s.Cliente.Apellido_paterno + " " + s.Cliente.Apellido_materno : null,
+                    NombreCliente = s.Cliente != null
+                        ? s.Cliente.Nombre + " " + s.Cliente.Apellido_paterno + " " + s.Cliente.Apellido_materno
+                        : null,
                     s.Monto_solicitado,
                     s.Plazo_meses,
                     s.Motivo,
                     s.Fecha_solicitud,
                     s.Id_estatus,
-                    s.Tasa_interes,               // <-- agregar esto
+                    s.Tasa_interes,
                     s.Pago_mensual_estimado,
-                    s.Observaciones
+                    s.Observaciones,
+                    CiudadCliente = s.Cliente != null ? s.Cliente.Ciudad : null,
+                    EstadoCliente = s.Cliente != null ? s.Cliente.Estado : null
                 })
                 .ToListAsync();
 
             return Ok(solicitudes);
         }
+
+
+
 
         [HttpPut("cambiar-estatus/{id}")]
         public async Task<IActionResult> CambiarEstatus(int id, [FromBody] CambiarEstatusRequest request)
@@ -194,6 +216,40 @@ namespace CrediGo.Controllers
 
             return Ok(new { mensaje = "Solicitud actualizada correctamente", solicitud = solicitudConRelaciones });
         }
+
+        [HttpGet("detalle-solicitud/{id}")]
+        public async Task<IActionResult> ObtenerDetalleSolicitud(int id)
+        {
+            var solicitud = await _context.SolicitudCredito
+                .Include(s => s.Cliente)
+                .Include(s => s.Usuario)
+                .Include(s => s.Estatus)
+                .FirstOrDefaultAsync(s => s.Id_solicitud == id);
+
+            if (solicitud == null)
+                return NotFound();
+
+            var cliente = solicitud.Cliente;
+
+            var validacion = await _context.ValidacionCliente
+                .Where(v => v.Id_cliente == cliente.Id_cliente)
+                .OrderByDescending(v => v.Fecha_verificacion)
+                .FirstOrDefaultAsync();
+
+            string base64Ine = validacion?.Archivo_ine != null ? Convert.ToBase64String(validacion.Archivo_ine) : null;
+            string base64Pdf = validacion?.Pdf_verificacion != null ? Convert.ToBase64String(validacion.Pdf_verificacion) : null;
+
+            var dto = new SolicitudDetalleDTO
+            {
+                Solicitud = solicitud,
+                Cliente = cliente,
+                Base64Ine = base64Ine,
+                Base64PdfCurp = base64Pdf
+            };
+
+            return Ok(dto);
+        }
+
 
     }
 }

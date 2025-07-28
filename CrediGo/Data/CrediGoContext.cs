@@ -65,6 +65,27 @@ namespace CrediGo.API.Data
                       .HasConstraintName("FK_Solicitud_Cliente")
                       .OnDelete(DeleteBehavior.Cascade);
             });
+            // Configuración de Bitacora
+            modelBuilder.Entity<Bitacora>(entity =>
+            {
+                entity.ToTable("Bitacora");
+                entity.HasKey(b => b.Id_bitacora);
+
+                // Relación con Usuario
+                entity.HasOne(b => b.Usuario)
+                      .WithMany() // o WithMany(u => u.Bitacoras) si lo tienes
+                      .HasForeignKey(b => b.Id_usuario)
+                      .HasConstraintName("FK_Bitacora_Usuario")
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación con Cliente (opcional, ya que puede no aplicar siempre)
+                entity.HasOne(b => b.ClienteAfectado)
+                      .WithMany()
+                      .HasForeignKey(b => b.Id_afectado)
+                      .HasConstraintName("FK_Bitacora_Cliente")
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
 
             // Configuración de Estatus

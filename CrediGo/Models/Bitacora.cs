@@ -13,5 +13,11 @@ namespace CrediGo.Models
         public string? Entidad_afectada { get; set; }
         public int? Id_afectado { get; set; }
         public DateTime Fecha { get; set; } = DateTime.Now;
+
+        // Relaciones
+        public Usuario Usuario { get; set; } = null!;
+
+        // Esto es opcional porque Id_afectado puede no referirse siempre a Cliente
+        public Cliente? ClienteAfectado { get; set; }
     }
 }

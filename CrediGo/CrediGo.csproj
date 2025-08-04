@@ -23,9 +23,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="tessdata\**\*.*">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		<None Update="x64\tesseract50.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="x64\leptonica-1.82.0.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="tessdata\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
+
 
 </Project>

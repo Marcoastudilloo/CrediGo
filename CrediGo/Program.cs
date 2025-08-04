@@ -45,7 +45,7 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 
-
+    
 var app = builder.Build();
 
 app.UseCors();
